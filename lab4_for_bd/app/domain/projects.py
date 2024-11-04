@@ -8,15 +8,18 @@ class Project(db.Model):
     id = db.Column(db.Integer, primary_key=True, autoincrement=True)
     name = db.Column(db.String(45), nullable=False)
     description = db.Column(db.String(50))
+    vacancies = db.relationship('Vacanci', backref='projects')
 
     def __repr__(self) -> str:
         return f"Project({self.id}, 'name={self.name}')"
 
     def put_into_dto(self) -> Dict[str, Any]:
+        vacancies = [vacanci.put_into_dto() for vacanci in self.vacancies]
         return {
             'id': self.id,
             'name': self.name,
-            'description': self.description
+            'description': self.description,
+            'vacancies' : vacancies if vacancies else None,
         }
 
     @staticmethod

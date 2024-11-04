@@ -28,21 +28,19 @@ class Experience(db.Model):
 
     @staticmethod
     def create_from_dto(dto_dict: Dict[str, Any]) -> Experience:
-        # Оновлена функція для перетворення дати з різними форматами
+        
         def parse_date(date_str: str) -> date:
             if not date_str:
                 return None
             try:
-                # Основний формат 'YYYY-MM-DD'
                 return datetime.strptime(date_str, '%Y-%m-%d').date()
             except ValueError:
                 try:
-                    # Альтернативний формат 'Wed, 01 Jan 2019 00:00:00 GMT'
                     return datetime.strptime(date_str, '%a, %d %b %Y %H:%M:%S GMT').date()
                 except ValueError:
                     raise ValueError(f"Unsupported date format: {date_str}")
 
-        # Використовуємо parse_date для перетворення start_date та end_date
+        
         return Experience(
             job_title=dto_dict.get('job_title'),
             start_date=parse_date(dto_dict.get('start_date')),

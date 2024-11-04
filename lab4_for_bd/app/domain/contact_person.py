@@ -9,16 +9,20 @@ class ContactPerson(db.Model):
     name = db.Column(db.String(45), nullable=False)
     phone = db.Column(db.String(20), unique=True)
     email = db.Column(db.String(100), unique=True)
+    vacancies = db.relationship('Vacanci', backref='contact_person')
+
 
     def __repr__(self) -> str:
         return f"ContactPerson({self.id}, 'name={self.name}')"
 
     def put_into_dto(self) -> Dict[str, Any]:
+        vacancies = [vacanci.put_into_dto() for vacanci in self.vacancies]
         return {
             'id': self.id,
             'name': self.name,
             'phone': self.phone,
-            'email': self.email
+            'email': self.email,
+            'vacancies' : vacancies if vacancies else None,
         }
 
     @staticmethod

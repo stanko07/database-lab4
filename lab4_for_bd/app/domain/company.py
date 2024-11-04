@@ -9,18 +9,24 @@ class Company(db.Model):
     name = db.Column(db.String(45), nullable=False)
     address = db.Column(db.String(45))
 
-    vacancies = db.relationship('Vacanci', backref='company', lazy=True)
-    interviews = db.relationship('Interview', backref='company', lazy=True)
-    experiences = db.relationship('Experience', backref='company', lazy=True)
+    vacancies = db.relationship('Vacanci', backref='companies')
+    interviews = db.relationship('Interview', backref='companies')
+    experiences = db.relationship('Experience', backref='companies')
 
     def __repr__(self) -> str:
         return f"Company({self.id}, 'name={self.name}')"
 
     def put_into_dto(self) -> Dict[str, Any]:
+        interviews = [interview.put_into_dto() for interview in self.interviews]
+        vacancies = [vacanci.put_into_dto() for vacanci in self.vacancies]
+        experiences = [experience.put_into_dto() for experience in self.experiences]
         return {
             'id': self.id,
             'name': self.name,
-            'address': self.address
+            'address': self.address,
+            'interviews' : interviews if interviews  else None,
+            'vacancies' : vacancies if vacancies else None,
+            'experiences': experiences if experiences else None,
         }
 
     @staticmethod

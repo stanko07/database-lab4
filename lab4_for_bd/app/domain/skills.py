@@ -7,6 +7,8 @@ class Skill(db.Model):
 
     id = db.Column(db.Integer, primary_key=True, autoincrement=True)
     name = db.Column(db.String(45), nullable=False)
+    skills_candidate = db.relationship('Candidates', secondary="Candidates_has_Skills", back_populates="candidate_skills")
+
 
     def __repr__(self) -> str:
         return f"Skill({self.id}, 'name={self.name}')"
@@ -14,7 +16,7 @@ class Skill(db.Model):
     def put_into_dto(self) -> Dict[str, Any]:
         return {
             'id': self.id,
-            'name': self.name
+            'name': self.name,
         }
 
     @staticmethod
