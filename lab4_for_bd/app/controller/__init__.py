@@ -9,6 +9,7 @@ from .interviews_controller import InterviewsController
 from .projects_controller import ProjectsController
 from .skills_controller import SkillsController
 from .vacanci_controller import VacanciController
+from .education_controller import EducationController
 
 candidate_have_skills_controller = CandidateHaveSkillsController()
 candidates_controller = CandidatesController()
@@ -21,3 +22,4 @@ interviews_controller = InterviewsController()
 projects_controller = ProjectsController()
 skills_controller = SkillsController()
 vacanci_controller = VacanciController()
+education_controller = EducationController()

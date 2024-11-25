@@ -35,3 +35,10 @@ class Company(db.Model):
             name=dto_dict.get('name'),
             address=dto_dict.get('address')
         )
+    
+
+def insert_company(name, address) -> Company:
+    new_company = Company(name=name, address=address)
+    db.session.add(new_company)
+    db.session.commit()
+    return new_company

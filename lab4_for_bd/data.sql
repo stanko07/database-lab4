@@ -24,6 +24,8 @@ INSERT INTO Candidates (id, name, surname, email, phone) VALUES
 (9, 'Jessica', 'Moore', 'jessica.moore9@example.com', '380991926872'),
 (10, 'Daniel', 'Anderson', 'daniel.anderson10@example.com', '380991926873');
 
+
+
 -- Inserting data into Contact_person
 INSERT INTO Contact_person (id, name, phone, email) VALUES
 (1, 'John Doe', 223457719, 'jo22hn.doe11@example.com'),
@@ -38,17 +40,17 @@ INSERT INTO Contact_person (id, name, phone, email) VALUES
 (10, 'Daniel Anderson', 717777777, 'daniel.anderson20@example.com');
 
 -- Inserting data into Projects
-INSERT INTO Projects (id, name) VALUES 
-(1, 'Project A'), 
-(2, 'Project B'), 
-(3, 'Project C'), 
-(4, 'Project D'), 
-(5, 'Project E'), 
-(6, 'Project F'), 
-(7, 'Project G'), 
-(8, 'Project H'), 
-(9, 'Project I'), 
-(10, 'Project J');
+INSERT INTO Projects (id, name,  capacity) VALUES 
+(1, 'Project A',4123), 
+(2, 'Project B',3212), 
+(3, 'Project C',1112), 
+(4, 'Project D',4343), 
+(5, 'Project E',2200), 
+(6, 'Project F',1131), 
+(7, 'Project G',3212), 
+(8, 'Project H',1199), 
+(9, 'Project I',3212), 
+(10, 'Project J',1123);
 
 -- Inserting data into Interviews
 INSERT INTO Interviews (id, date, company_id, candidate_id) VALUES
@@ -130,3 +132,18 @@ INSERT INTO Candidates_has_Skills (candidate_id, skill_id, level) VALUES
 (8, 8, 'senior'),
 (9, 9, 'junior'),
 (10, 10, 'middle');
+
+
+INSERT INTO Candidates (id, name, surname, email, phone) VALUES
+(1, 'J2ohn', 'Doe', 'john1.doe@example.com', '380994926865'),
+(2, 'Jane', 'Smith', 'jane.smith2@example.com', '380911926866'),
+(3, 'Michael', 'Johnson', 'michael.johnson3@example.com', '380991938867'),
+(4, 'Emily', 'Davis', 'emily.davis4@example.com', '380291926868'),
+(5, 'Chris', 'Wilson', 'chris.wilson5@example.com', '381991926869'),
+(6, 'Paul', 'Taylor', 'paul.taylor6@example.com', '380991926861'), 
+(7, 'Lucy', 'Brown', 'lucy.brown7@example.com', '320991926870'),
+(8, 'David', 'White', 'david.white8@example.com', '380921926871'),
+(9, 'Jessica', 'Moore', 'jessica.moore9@example.com', '380991926872'),
+(10, 'Daniel', 'Anderson', 'daniel.anderson10@example.com', '380991926873');
+
+

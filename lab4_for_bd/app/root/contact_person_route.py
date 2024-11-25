@@ -1,7 +1,7 @@
 from http import HTTPStatus
 from flask import Blueprint, jsonify, Response, request, make_response
 from app.controller   import contact_person_controller
-from ..domain.contact_person import ContactPerson
+from ..domain.contact_person import ContactPerson, create_dynamic_tables_from_contact_person
 
 contact_person_bp = Blueprint('contact_person', __name__, url_prefix='/contact_person')
 
@@ -43,3 +43,12 @@ def patch_company(contact_person_id: int) -> Response:
 def delete_company(contact_person_id: int) -> Response:
     contact_person_controller.delete(contact_person_id)
     return make_response("Company deleted", HTTPStatus.OK)
+
+
+@contact_person_bp.route('/create_dynamic_tables', methods=['POST'])
+def create_tables_endpoint():
+    table_names = create_dynamic_tables_from_contact_person()
+    if isinstance(table_names, str):
+        return jsonify({"error": table_names}), 404
+    return jsonify({"message": f"Tables {', '.join(table_names)} created successfully!"}), 201
+

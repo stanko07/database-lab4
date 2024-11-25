@@ -43,3 +43,15 @@ def patch_goal(candidate_have_skills_id: int) -> Response:
 def delete_goal(candidate_have_skills_id: int) -> Response:
     candidate_have_skills_controller.delete(candidate_have_skills_id)
     return make_response("Goal deleted", HTTPStatus.OK)
+
+@candidate_have_skills_bp.route('/new_link', methods=['POST'])
+def add_candidate_has_skill():
+    data = request.get_json()
+    candidate_name = data['candidat']
+    skill_name = data['skill']
+
+    try:
+        new_link = CandidateHaveSkills.add_candidate_has_skill(candidate_name, skill_name)
+        return make_response(jsonify(new_link.put_into_dto()), HTTPStatus.CREATED)
+    except ValueError as e:
+        return make_response(str(e), HTTPStatus.BAD_REQUEST)
