@@ -8,3 +8,4 @@ from .candidate_have_skills import CandidateHaveSkills
 from .interview_results import InterviewResult
 from .interviews import Interview
 from .vacanci import Vacanci
+from .education import Education

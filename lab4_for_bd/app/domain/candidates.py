@@ -44,5 +44,5 @@ class Candidates(db.Model):
             name=dto_dict.get('name'),
             surname=dto_dict.get('surname'),
             email=dto_dict.get('email'),
-            phone=dto_dict.get('phone')
+            phone=dto_dict.get('phone'),
         )

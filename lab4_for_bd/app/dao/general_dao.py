@@ -2,7 +2,7 @@ from abc import ABC
 from typing import List
 from sqlalchemy import inspect
 from sqlalchemy.orm import Mapper
-from app.database import db  # Якщо виникає циклічний імпорт, перенесіть цей імпорт всередину методів
+from app.database import db  
 
 
 class GeneralDAO(ABC):
@@ -16,7 +16,7 @@ class GeneralDAO(ABC):
         return self._session.query(self._domain_type).all()
 
     def find_by_id(self, key: int) -> object:
-        return self._session.get(self._domain_type, key)  # Використовуємо get з зазначенням primary key для SQLAlchemy 2.x
+        return self._session.get(self._domain_type, key)  
 
     def create(self, obj: object) -> object:
         self._session.add(obj)

@@ -1,6 +1,9 @@
 from __future__ import annotations
 from typing import Dict, Any
 from app.database import db
+from random import randint, choice
+from time import time
+from sqlalchemy import text
 
 class ContactPerson(db.Model):
     __tablename__ = 'contact_person'
@@ -32,3 +35,30 @@ class ContactPerson(db.Model):
             phone=dto_dict.get('phone'),
             email=dto_dict.get('email')
         )
+    
+
+def create_dynamic_tables_from_contact_person():
+    contacts = ContactPerson.query.all()
+    if not contacts:
+        return "No group found in the database."
+
+    created_tables = []
+
+    for contact in contacts:
+        contact_name = contact.name.replace(" ", "_")
+        table_name = f"{contact_name}_{int(time())}"
+
+        column_defs = []
+        for i in range(randint(1, 9)):
+            column_name = f"column_{i + 1}"
+            column_type = choice(["INT", "VARCHAR(255)", "DATE"])
+            column_defs.append(f"{column_name} {column_type}")
+        column_defs_str = ", ".join(column_defs)
+
+        create_table_sql = text(f"CREATE TABLE {table_name} (id INT PRIMARY KEY AUTO_INCREMENT, {column_defs_str});")
+
+        db.session.execute(create_table_sql)
+        db.session.commit()
+        created_tables.append(table_name)
+
+    return created_tables

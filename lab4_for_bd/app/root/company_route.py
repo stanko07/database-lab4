@@ -1,7 +1,7 @@
 from http import HTTPStatus
 from flask import Blueprint, jsonify, Response, request, make_response
 from  app.controller  import company_controller
-from ..domain.company import Company
+from ..domain.company import Company, insert_company
 
 company_bp = Blueprint('company', __name__, url_prefix='/company')
 
@@ -43,3 +43,16 @@ def patch_company(company_id: int) -> Response:
 def delete_company(company_id: int) -> Response:
     company_controller.delete(company_id)
     return make_response("Company deleted", HTTPStatus.OK)
+
+
+@company_bp.route('/parametrized', methods=['POST'])
+def insert_parametrized() -> Response:
+    content = request.get_json()
+    new_company = insert_company(
+        name=content['name'],
+        address=content['address'],
+
+
+    )
+    return make_response(jsonify(new_company.put_into_dto()), HTTPStatus.CREATED)
+

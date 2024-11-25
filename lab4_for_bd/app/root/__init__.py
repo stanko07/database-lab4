@@ -11,6 +11,7 @@ from .interviews_route import interviews_bp
 from .project_route import project_bp
 from .skills_route import skills_bp
 from .vacancii_route import vacancii_bp 
+from .education_route import education_controller_bp
 
 
 def register_routes(app: Flask) -> None:
@@ -26,4 +27,5 @@ def register_routes(app: Flask) -> None:
     app.register_blueprint(project_bp)
     app.register_blueprint(skills_bp)
     app.register_blueprint(vacancii_bp)
+    app.register_blueprint(education_controller_bp)
 
