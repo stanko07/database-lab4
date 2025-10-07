@@ -7,6 +7,7 @@ colorama==0.4.6
 Flask==3.0.0
 flask-restx==1.1.0
 Flask-SQLAlchemy==3.1.1
+flasgger==0.9.7.1
 greenlet==3.0.1
 itsdangerous==2.1.2
 Jinja2==3.1.2
@@ -21,6 +22,7 @@ pathspec==0.11.2
 platformdirs==4.0.0
 python-dotenv==1.0.0
 pytz==2023.3.post1
+PyMySQL==1.1.0
 referencing==0.31.0
 rpds-py==0.13.0
 SQLAlchemy==2.0.23
