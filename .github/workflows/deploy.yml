@@ -42,33 +42,33 @@ jobs:
             # Kill old process if exists (before starting new one)
             echo "🔍 Checking for old Flask processes..."
             
-            # Disable exit on error for kill commands
+            # Temporarily disable exit on error for process management
             set +e
-            OLD_PIDS=$(pgrep -f "python run_production.py")
-            KILL_EXIT_CODE=$?
-            set -e
             
-            if [ $KILL_EXIT_CODE -eq 0 ] && [ ! -z "$OLD_PIDS" ]; then
+            # Try to gracefully stop old processes
+            if pgrep -f "python run_production.py" > /dev/null 2>&1; then
+              OLD_PIDS=$(pgrep -f "python run_production.py")
               echo "Found old Flask process(es): $OLD_PIDS"
               echo "Stopping old process(es)..."
               
-              # Disable error checking for kill operations
-              set +e
-              pkill -TERM -f "python run_production.py"
+              # Graceful shutdown with SIGTERM
+              pkill -TERM -f "python run_production.py" || true
               sleep 3
               
               # Force kill if still running
               if pgrep -f "python run_production.py" > /dev/null 2>&1; then
                 echo "⚠️ Processes still running, force killing..."
-                pkill -9 -f "python run_production.py"
+                pkill -9 -f "python run_production.py" || true
                 sleep 2
               fi
-              set -e
               
               echo "✅ Old process(es) stopped"
             else
               echo "No old processes found"
             fi
+            
+            # Re-enable exit on error
+            set -e
 
             # Start new Flask application in background with production server
             echo "🚀 Starting new Flask application..."

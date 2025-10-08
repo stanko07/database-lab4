@@ -103,8 +103,12 @@ echo -e "${GREEN}✅ Application test passed${NC}"
 
 # Step 7: Kill old processes
 echo -e "${YELLOW}Step 7: Cleaning up old processes...${NC}"
-pkill -f "python run_production.py" || echo "No old processes found"
-pkill -f "python app.py" || echo "No old app.py processes found"
+# Disable exit on error temporarily
+set +e
+pkill -f "python run_production.py" || echo "No run_production.py processes found"
+pkill -f "python app.py" || echo "No app.py processes found"
+sleep 2
+set -e
 echo -e "${GREEN}✅ Old processes cleaned${NC}"
 
 # Step 8: Start production server
