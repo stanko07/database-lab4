@@ -78,4 +78,4 @@ jobs:
 
       - name: Notify on failure
         if: failure()
-        run: echo "❌ Deployment failed! Check logs for details."
+        run: echo "❌ Deployment failed! Check logs for details"
