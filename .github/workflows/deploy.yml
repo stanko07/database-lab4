@@ -22,7 +22,6 @@ jobs:
           key: ${{ secrets.AWS_PRIVATE_KEY }}
           port: 22
           script: |
-            set -e  # Exit on error (but we'll disable it for kill commands)
             cd /home/admin/database-lab4/lab4_for_bd
 
             # Switch to main branch
@@ -41,9 +40,6 @@ jobs:
 
             # Kill old process if exists (before starting new one)
             echo "🔍 Checking for old Flask processes..."
-            
-            # Temporarily disable exit on error for process management
-            set +e
             
             # Try to gracefully stop old processes
             if pgrep -f "python run_production.py" > /dev/null 2>&1; then
@@ -66,9 +62,6 @@ jobs:
             else
               echo "No old processes found"
             fi
-            
-            # Re-enable exit on error
-            set -e
 
             # Start new Flask application in background with production server
             echo "🚀 Starting new Flask application..."
