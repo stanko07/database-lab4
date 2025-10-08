@@ -101,22 +101,30 @@ python -c "from app import create_app; app = create_app(); print('✅ App create
 
 echo -e "${GREEN}✅ Application test passed${NC}"
 
-# Step 7: Kill old processes
+# Step 7: Kill old processes - АГРЕСИВНИЙ МЕТОД
 echo -e "${YELLOW}Step 7: Cleaning up old processes...${NC}"
 # Disable exit on error temporarily
 set +e
-pkill -9 -f "python run_production.py" || echo "No run_production.py processes found"
-pkill -9 -f "python3 run_production.py" || echo "No python3 run_production.py processes found"
-pkill -9 -f "python app.py" || echo "No app.py processes found"
 
-# Вбиваємо процеси на порту 5000
-PID_ON_PORT=$(ss -tlnp 2>/dev/null | grep ':5000' | grep -oP 'pid=\K[0-9]+' | head -1)
-if [ -n "$PID_ON_PORT" ]; then
-  echo "Found process $PID_ON_PORT on port 5000, killing..."
-  kill -9 $PID_ON_PORT 2>/dev/null || true
+echo "Killing all run_production.py processes..."
+pkill -9 -f "run_production.py" || echo "No run_production.py processes found"
+pkill -9 -f "waitress" || echo "No waitress processes found"
+
+echo "Using fuser to kill port 5000..."
+fuser -k 5000/tcp 2>/dev/null || echo "No process on port 5000"
+
+echo "Waiting for port to be free..."
+sleep 5
+
+# Перевірка чи порт вільний
+if netstat -tuln 2>/dev/null | grep -q ':5000 '; then
+  echo -e "${RED}⚠️  Port 5000 still in use, forcing kill...${NC}"
+  fuser -k -9 5000/tcp 2>/dev/null || true
+  sleep 3
+else
+  echo -e "${GREEN}✅ Port 5000 is free${NC}"
 fi
 
-sleep 3
 set -e
 echo -e "${GREEN}✅ Old processes cleaned${NC}"
 
