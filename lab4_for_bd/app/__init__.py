@@ -68,7 +68,7 @@ def create_database():
             host='vacancies-company.cp0suqqgsip3.eu-north-1.rds.amazonaws.com',
             user='admin',
             password='vfhnf111',
-            database='vacancies_company',
+            database='new_company',
             port=3306
         )
         cursor = connection.cursor()
@@ -97,7 +97,7 @@ def populate_data_mysql():
             host='vacancies-company.cp0suqqgsip3.eu-north-1.rds.amazonaws.com',
             user='admin',
             password='vfhnf111',
-            database='vacancies_company',
+            database='new_company',
             port=3306
         )
         cursor = connection.cursor()

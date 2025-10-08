@@ -5,7 +5,7 @@ from sqlalchemy import Enum
 
 # Приклад моделі Candidates
 class Candidates(db.Model):
-    __tablename__ = 'Candidates'
+    __tablename__ = 'candidates'
 
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(45), nullable=False)

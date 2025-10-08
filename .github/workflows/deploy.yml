@@ -40,56 +40,68 @@ jobs:
             # Змінні середовища
             export USE_MYSQL=true
 
-            # Створюємо скрипт який виконається ПІСЛЯ закриття SSH
-            cat > restart_after_ssh.sh << 'EOF'
-            #!/bin/bash
-            sleep 2
-            cd /home/admin/database-lab4/lab4_for_bd
-            
-            # Вбиваємо старі процеси
-            pkill -9 -f "run_production.py" || true
-            pkill -9 -f "waitress" || true
-            fuser -k -9 5000/tcp || true
+            # 🔍 Зупинка старих процесів - АГРЕСИВНИЙ МЕТОД
+            echo "🔍 Stopping ALL old Flask/Waitress/Python processes..."
+
+            # Метод 1: Вбити всі Python процеси з run_production.py
+            echo "Method 1: Killing run_production.py processes..."
+            pkill -9 -f "run_production.py" 2>/dev/null || true
+            pkill -9 -f "python.*run_production" 2>/dev/null || true
+
+            # Метод 2: Вбити всі waitress процеси
+            echo "Method 2: Killing waitress processes..."
+            pkill -9 -f "waitress" 2>/dev/null || true
+
+            # Метод 3: Видалити PID файл
+            echo "Method 3: Removing PID file..."
             rm -f app.pid
-            
+
+            # Метод 4: Використати fuser (якщо доступний)
+            echo "Method 4: Using fuser to kill port 5000..."
+            fuser -k 5000/tcp 2>/dev/null || true
+
             # Чекаємо поки порт звільниться
-            sleep 3
-            
-            # Запускаємо новий сервер
-            source venv/bin/activate
-            export USE_MYSQL=true
+            echo "Waiting for port 5000 to be free..."
+            sleep 5
+
+            # Перевіряємо чи порт вільний
+            if netstat -tuln 2>/dev/null | grep -q ':5000 '; then
+              echo "⚠️  Port 5000 still in use, trying one more time..."
+              fuser -k -9 5000/tcp 2>/dev/null || true
+              sleep 3
+            else
+              echo "✅ Port 5000 is free"
+            fi
+
+            # 🚀 Запуск нового сервера у фоновому режимі
+            echo "🚀 Starting new Flask/Waitress application..."
             nohup python3 run_production.py > flask.log 2>&1 & echo $! > app.pid
-            EOF
-            
-            chmod +x restart_after_ssh.sh
-            
-            # Запускаємо скрипт ПІСЛЯ виходу з SSH через at
-            echo "bash /home/admin/database-lab4/lab4_for_bd/restart_after_ssh.sh" | at now + 1 minute 2>/dev/null || {
-              # Якщо at не працює, використовуємо screen
-              screen -dmS deploy_restart bash restart_after_ssh.sh || {
-                # Якщо screen не працює, використовуємо nohup з disown
-                (nohup bash restart_after_ssh.sh > /dev/null 2>&1 &) && disown
-              }
-            }
-            
-            echo "✅ Deployment script scheduled to run after SSH disconnect"
-            echo "⏳ Server will restart in ~1 minute"
+            NEW_PID=$(cat app.pid)
+            echo "Started new process with PID: $NEW_PID"
+
+            # Очікуємо, поки сервер стартує
+            sleep 8
+            if kill -0 $NEW_PID 2>/dev/null; then
+              echo "✅ Flask/Waitress is running (PID $NEW_PID)"
+              curl -s http://localhost:5000/health || true
+            else
+              echo "❌ Flask/Waitress failed to start"
+              tail -50 flask.log || true
+              exit 1
+            fi
 
       - name: Health Check
         run: |
-          echo "⏳ Waiting for server to restart (75 seconds)..."
-          sleep 75
-          
-          echo "🔍 Checking if server is up..."
+          sleep 5
           response=$(curl -s -o /dev/null -w "%{http_code}" http://${{ secrets.AWS_EC2_HOST }}:5000/health)
           if [ $response -eq 200 ]; then
             echo "✅ Application is running successfully!"
             echo "🌐 API Endpoint: http://${{ secrets.AWS_EC2_HOST }}:5000/candidates"
             echo "📚 Swagger UI: http://${{ secrets.AWS_EC2_HOST }}:5000/apidocs/"
           else
-            echo "⚠️  Health check returned status code: $response"
-            echo "Server might still be starting up, this is OK for CD"
-            echo "🌐 Check manually: http://${{ secrets.AWS_EC2_HOST }}:5000/apidocs/"
+            echo "❌ Health check failed with status code: $response"
+            tail -50 /home/admin/database-lab4/lab4_for_bd/flask.log || true
+            exit 1
           fi
 
       - name: Notify on success

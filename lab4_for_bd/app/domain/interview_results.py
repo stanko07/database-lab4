@@ -8,7 +8,7 @@ class InterviewResult(db.Model):
 
     id = db.Column(db.Integer, primary_key=True, autoincrement=True)
     rating = db.Column(Enum('low', 'medium', 'high', name='rating_enum'), nullable=False)
-    candidate_id = db.Column(db.Integer, db.ForeignKey('Candidates.id'), nullable=True)
+    candidate_id = db.Column(db.Integer, db.ForeignKey('candidates.id'), nullable=True)
     interview_id = db.Column(db.Integer, db.ForeignKey('Interviews.id'), nullable=True)
 
     def __repr__(self) -> str:

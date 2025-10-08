@@ -3,14 +3,14 @@ from typing import Dict, Any
 from app.database import db
 
 class Vacanci(db.Model):
-    __tablename__ = 'Vacanci'
+    __tablename__ = 'vacanci'
     
     id = db.Column(db.Integer, primary_key=True, autoincrement=True)
     title = db.Column(db.String(45), nullable=False)
     description = db.Column(db.Text, nullable=True)
-    contact_person_id = db.Column(db.Integer, db.ForeignKey('Contact_person.id'), nullable=False)
-    Projects_id = db.Column(db.Integer, db.ForeignKey('Projects.id'), nullable=False)
-    company_id = db.Column(db.Integer, db.ForeignKey('Companies.id'), nullable=False)
+    contact_person_id = db.Column(db.Integer, db.ForeignKey('contact_person.id'), nullable=False)
+    projects_id = db.Column(db.Integer, db.ForeignKey('projects.id'), nullable=False)
+    company_id = db.Column(db.Integer, db.ForeignKey('companies.id'), nullable=False)
 
 
     def __repr__(self) -> str:
@@ -22,7 +22,7 @@ class Vacanci(db.Model):
             'title': self.title,
             'description': self.description,
             'contact_person_id': self.contact_person_id,
-            'Projects_id': self.Projects_id,
+            'projects_id': self.projects_id,
             'company_id': self.company_id
         }
 
@@ -32,6 +32,6 @@ class Vacanci(db.Model):
             title=dto_dict.get('title'),
             description=dto_dict.get('description'),
             contact_person_id=dto_dict.get('contact_person_id'),
-            Projects_id=dto_dict.get('Projects_id'),
+            projects_id=dto_dict.get('projects_id'),
             company_id=dto_dict.get('company_id')
         )

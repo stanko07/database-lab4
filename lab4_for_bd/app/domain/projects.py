@@ -3,7 +3,7 @@ from typing import Dict, Any
 from app.database import db
 
 class Project(db.Model):
-    __tablename__ = 'Projects'
+    __tablename__ = 'projects'
 
     id = db.Column(db.Integer, primary_key=True, autoincrement=True)
     name = db.Column(db.String(45), nullable=False)

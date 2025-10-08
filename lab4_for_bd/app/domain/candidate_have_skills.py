@@ -6,8 +6,8 @@ from sqlalchemy import Enum
 class CandidateHaveSkills(db.Model):
     __tablename__ = 'Candidates_has_Skills'
 
-    candidate_id = db.Column(db.Integer, db.ForeignKey('Candidates.id'), primary_key=True)
-    skill_id = db.Column(db.Integer, db.ForeignKey('Skills.id'), primary_key=True)
+    candidate_id = db.Column(db.Integer, db.ForeignKey('candidates.id'), primary_key=True)
+    skill_id = db.Column(db.Integer, db.ForeignKey('skills.id'), primary_key=True)
     level = db.Column(Enum('junior', 'middle', 'senior'))
 
     def __repr__(self) -> str:
