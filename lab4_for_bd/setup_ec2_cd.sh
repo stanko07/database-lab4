@@ -105,9 +105,18 @@ echo -e "${GREEN}✅ Application test passed${NC}"
 echo -e "${YELLOW}Step 7: Cleaning up old processes...${NC}"
 # Disable exit on error temporarily
 set +e
-pkill -f "python run_production.py" || echo "No run_production.py processes found"
-pkill -f "python app.py" || echo "No app.py processes found"
-sleep 2
+pkill -9 -f "python run_production.py" || echo "No run_production.py processes found"
+pkill -9 -f "python3 run_production.py" || echo "No python3 run_production.py processes found"
+pkill -9 -f "python app.py" || echo "No app.py processes found"
+
+# Вбиваємо процеси на порту 5000
+PID_ON_PORT=$(ss -tlnp 2>/dev/null | grep ':5000' | grep -oP 'pid=\K[0-9]+' | head -1)
+if [ -n "$PID_ON_PORT" ]; then
+  echo "Found process $PID_ON_PORT on port 5000, killing..."
+  kill -9 $PID_ON_PORT 2>/dev/null || true
+fi
+
+sleep 3
 set -e
 echo -e "${GREEN}✅ Old processes cleaned${NC}"
 
