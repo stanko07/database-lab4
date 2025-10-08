@@ -52,6 +52,11 @@ jobs:
               fi
               rm -f app.pid
             fi
+            
+            # Вбиваємо всі процеси на порту 5000
+            echo "🔍 Killing all processes on port 5000..."
+            lsof -ti:5000 | xargs kill -9 2>/dev/null || true
+            sleep 2
 
             # 🚀 Запуск нового сервера у фоновому режимі
             echo "🚀 Starting new Flask/Waitress application..."
