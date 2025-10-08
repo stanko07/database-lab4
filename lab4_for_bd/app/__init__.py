@@ -68,7 +68,7 @@ def create_database():
             host='vacancies-company.cp0suqqgsip3.eu-north-1.rds.amazonaws.com',
             user='admin',
             password='vfhnf111',
-            database='new_company',
+            database='vacancies-company',
             port=3306
         )
         cursor = connection.cursor()
