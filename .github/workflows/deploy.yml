@@ -22,6 +22,7 @@ jobs:
           key: ${{ secrets.AWS_PRIVATE_KEY }}
           port: 22
           script: |
+            set -e  # Exit on error (but we'll disable it for kill commands)
             cd /home/admin/database-lab4/lab4_for_bd
 
             # Switch to main branch
@@ -40,21 +41,30 @@ jobs:
 
             # Kill old process if exists (before starting new one)
             echo "🔍 Checking for old Flask processes..."
-            OLD_PIDS=$(pgrep -f "python run_production.py" || echo "")
-
-            if [ ! -z "$OLD_PIDS" ]; then
+            
+            # Disable exit on error for kill commands
+            set +e
+            OLD_PIDS=$(pgrep -f "python run_production.py")
+            KILL_EXIT_CODE=$?
+            set -e
+            
+            if [ $KILL_EXIT_CODE -eq 0 ] && [ ! -z "$OLD_PIDS" ]; then
               echo "Found old Flask process(es): $OLD_PIDS"
               echo "Stopping old process(es)..."
-              # Use || true to ignore exit codes (143 is normal for SIGTERM)
-              pkill -f "python run_production.py" 2>/dev/null || true
+              
+              # Disable error checking for kill operations
+              set +e
+              pkill -TERM -f "python run_production.py"
               sleep 3
               
-              # Verify processes are stopped
-              if pgrep -f "python run_production.py" > /dev/null; then
+              # Force kill if still running
+              if pgrep -f "python run_production.py" > /dev/null 2>&1; then
                 echo "⚠️ Processes still running, force killing..."
-                pkill -9 -f "python run_production.py" 2>/dev/null || true
+                pkill -9 -f "python run_production.py"
                 sleep 2
               fi
+              set -e
+              
               echo "✅ Old process(es) stopped"
             else
               echo "No old processes found"
