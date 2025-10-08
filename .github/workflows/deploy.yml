@@ -35,36 +35,51 @@ jobs:
             # Install/update dependencies
             pip install -r app/requirements.txt
 
-            # Save PID of old process if exists
-            OLD_PID=$(pgrep -f "python app.py" || echo "")
+            # Set environment variable for MySQL
+            export USE_MYSQL=true
 
-            # Start new Flask application in background
-            nohup python app.py > flask.log 2>&1 &
-            NEW_PID=$!
-
-            echo "Started new Flask process with PID: $NEW_PID"
-            sleep 5
-
-            # Kill old process if it exists and is different from new one
-            if [ ! -z "$OLD_PID" ] && [ "$OLD_PID" != "$NEW_PID" ]; then
-              echo "Killing old Flask process: $OLD_PID"
-              kill $OLD_PID || true
-              sleep 2
+            # Kill old process if exists (before starting new one)
+            echo "🔍 Checking for old Flask processes..."
+            OLD_PIDS=$(pgrep -f "python run_production.py" || true)
+            
+            if [ ! -z "$OLD_PIDS" ]; then
+              echo "Found old Flask process(es): $OLD_PIDS"
+              echo "Stopping old process(es)..."
+              pkill -f "python run_production.py" || true
+              sleep 3
+              echo "✅ Old process(es) stopped"
+            else
+              echo "No old processes found"
             fi
 
-            # Wait for new application to fully start
-            sleep 5
+            # Start new Flask application in background with production server
+            echo "🚀 Starting new Flask application..."
+            nohup python run_production.py > flask.log 2>&1 &
+            NEW_PID=$!
+            echo "Started new Flask process with PID: $NEW_PID"
+
+            # Wait for application to initialize
+            sleep 8
 
             # Check if new Flask is running
-            if kill -0 $NEW_PID 2>/dev/null; then
+            if ps -p $NEW_PID > /dev/null 2>&1; then
               echo "✅ Flask application started successfully (PID: $NEW_PID)"
+              
+              # Test local endpoint
+              sleep 2
+              if curl -s http://localhost:5000/candidates > /dev/null 2>&1; then
+                echo "✅ API endpoint responding"
+              else
+                echo "⚠️ API endpoint not yet responding (might need more time)"
+              fi
             else
               echo "❌ Flask application failed to start"
-              cat flask.log
+              echo "Last 50 lines of log:"
+              tail -50 flask.log
               exit 1
             fi
 
-            echo "🚀 Deployment completed at $(date)"
+            echo "🚀 Deployment completed successfully at $(date)"
 
       - name: Health Check
         run: |
