@@ -1,0 +1,81 @@
+name: Deploy to AWS EC2
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    name: Deploy to Production
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Deploy to EC2 via SSH
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ secrets.AWS_EC2_HOST }}
+          username: admin
+          key: ${{ secrets.AWS_PRIVATE_KEY }}
+          port: 22
+          script: |
+            cd /home/admin/database-lab4/lab4_for_bd
+
+            # Switch to main branch
+            git fetch origin
+            git checkout main
+            git pull origin main
+
+            # Activate virtual environment
+            source venv/bin/activate
+
+            # Install/update dependencies
+            pip install -r app/requirements.txt
+
+            # Kill existing Flask process if running
+            pkill -f "python app.py" || true
+            sleep 2
+
+            # Start Flask application in background
+            nohup python app.py > flask.log 2>&1 &
+
+            # Wait for application to start
+            sleep 10
+
+            # Check if Flask is running
+            if pgrep -f "python app.py" > /dev/null; then
+              echo "✅ Flask application started successfully"
+            else
+              echo "❌ Flask application failed to start"
+              cat flask.log
+              exit 1
+            fi
+
+            echo "🚀 Deployment completed at $(date)"
+
+      - name: Health Check
+        run: |
+          sleep 5
+          response=$(curl -s -o /dev/null -w "%{http_code}" http://${{ secrets.AWS_EC2_HOST }}:5000/candidates)
+          if [ $response -eq 200 ]; then
+            echo "✅ Application is running successfully!"
+            echo "🌐 API Endpoint: http://${{ secrets.AWS_EC2_HOST }}:5000/candidates"
+            echo "📚 Swagger UI: http://${{ secrets.AWS_EC2_HOST }}:5000/apidocs/"
+          else
+            echo "❌ Health check failed with status code: $response"
+            exit 1
+          fi
+
+      - name: Notify on success
+        if: success()
+        run: |
+          echo "✅ Deployment successful!"
+          echo "🎉 Application deployed to production"
+          echo "📝 Check Swagger documentation at: http://${{ secrets.AWS_EC2_HOST }}:5000/apidocs/"
+
+      - name: Notify on failure
+        if: failure()
+        run: echo "❌ Deployment failed! Check logs for details."
