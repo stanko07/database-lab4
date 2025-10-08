@@ -35,19 +35,29 @@ jobs:
             # Install/update dependencies
             pip install -r app/requirements.txt
 
-            # Kill existing Flask process if running
-            pkill -f "python app.py" || true
-            sleep 2
+            # Save PID of old process if exists
+            OLD_PID=$(pgrep -f "python app.py" || echo "")
 
-            # Start Flask application in background
+            # Start new Flask application in background
             nohup python app.py > flask.log 2>&1 &
+            NEW_PID=$!
 
-            # Wait for application to start
-            sleep 10
+            echo "Started new Flask process with PID: $NEW_PID"
+            sleep 5
 
-            # Check if Flask is running
-            if pgrep -f "python app.py" > /dev/null; then
-              echo "✅ Flask application started successfully"
+            # Kill old process if it exists and is different from new one
+            if [ ! -z "$OLD_PID" ] && [ "$OLD_PID" != "$NEW_PID" ]; then
+              echo "Killing old Flask process: $OLD_PID"
+              kill $OLD_PID || true
+              sleep 2
+            fi
+
+            # Wait for new application to fully start
+            sleep 5
+
+            # Check if new Flask is running
+            if kill -0 $NEW_PID 2>/dev/null; then
+              echo "✅ Flask application started successfully (PID: $NEW_PID)"
             else
               echo "❌ Flask application failed to start"
               cat flask.log
