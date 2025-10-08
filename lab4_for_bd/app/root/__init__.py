@@ -1,6 +1,7 @@
 from flask import Flask
 
 from .error_handler import err_handler_bp
+from .health_route import health_bp
 from .candidate_have_skills_route import candidate_have_skills_bp
 from .candidates_route import candidates_controller_bp
 from .company_route import company_bp
@@ -15,6 +16,7 @@ from .vacancii_route import vacancii_bp
 
 def register_routes(app: Flask) -> None:
     app.register_blueprint(err_handler_bp)
+    app.register_blueprint(health_bp)
     
     app.register_blueprint(candidate_have_skills_bp)
     app.register_blueprint(candidates_controller_bp)
