@@ -9,8 +9,8 @@ class Interview(db.Model):
 
     id = db.Column(db.Integer, primary_key=True, autoincrement=True)
     date = db.Column(db.DateTime)
-    company_id = db.Column(db.Integer, db.ForeignKey('companies.id'), nullable=True)
-    candidate_id = db.Column(db.Integer, db.ForeignKey('candidates.id'), nullable=True)
+    company_id = db.Column(db.Integer, db.ForeignKey('Companies.id'), nullable=True)
+    candidate_id = db.Column(db.Integer, db.ForeignKey('Candidates.id'), nullable=True)
 
     def __repr__(self) -> str:
         return f"Interview({self.id}, 'date={self.date}')"

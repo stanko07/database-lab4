@@ -10,8 +10,8 @@ class Experience(db.Model):
     job_title = db.Column(db.String(45))
     start_date = db.Column(db.Date)
     end_date = db.Column(db.Date)
-    company_id = db.Column(db.Integer, db.ForeignKey('companies.id'), nullable=False)
-    candidate_id = db.Column(db.Integer, db.ForeignKey('candidates.id'), nullable=False)
+    company_id = db.Column(db.Integer, db.ForeignKey('Companies.id'), nullable=False)
+    candidate_id = db.Column(db.Integer, db.ForeignKey('Candidates.id'), nullable=False)
 
     def __repr__(self) -> str:
         return f"Experience(id='{self.id}', 'job_title={self.job_title}')"

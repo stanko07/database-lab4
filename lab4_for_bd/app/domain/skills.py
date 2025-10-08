@@ -3,7 +3,7 @@ from typing import Dict, Any
 from app.database import db
 
 class Skill(db.Model):
-    __tablename__ = 'skills'
+    __tablename__ = 'Skills'
 
     id = db.Column(db.Integer, primary_key=True, autoincrement=True)
     name = db.Column(db.String(45), nullable=False)

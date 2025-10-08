@@ -3,7 +3,7 @@ from typing import Dict, Any
 from app.database import db
 
 class ContactPerson(db.Model):
-    __tablename__ = 'contact_person'
+    __tablename__ = 'Contact_person'
 
     id = db.Column(db.Integer, primary_key=True, autoincrement=True)
     name = db.Column(db.String(45), nullable=False)
