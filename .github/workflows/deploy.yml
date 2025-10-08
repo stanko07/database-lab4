@@ -40,52 +40,71 @@ jobs:
             # Змінні середовища
             export USE_MYSQL=true
 
-            # 🔍 Зупинка старих процесів - безпечний метод
+            # 🔍 Створюємо deploy скрипт на сервері
+            cat > deploy_restart.sh << 'DEPLOY_SCRIPT'
+            #!/bin/bash
+            set -e
+            
             echo "🔍 Stopping old processes..."
             
-            # Створюємо окремий скрипт для вбивання процесів
-            cat > /tmp/kill_processes.sh << 'EOF'
-            #!/bin/bash
-            pkill -9 -f "run_production.py" 2>/dev/null || true
-            pkill -9 -f "waitress" 2>/dev/null || true
-            fuser -k -9 5000/tcp 2>/dev/null || true
-            rm -f /home/admin/database-lab4/lab4_for_bd/app.pid
-            EOF
-            
-            chmod +x /tmp/kill_processes.sh
-            
-            # Запускаємо скрипт в окремій сесії
-            nohup bash /tmp/kill_processes.sh > /dev/null 2>&1 &
-            
-            # Чекаємо поки процеси завершаться
-            echo "Waiting for processes to stop..."
-            sleep 5
-            
-            # Перевіряємо чи порт вільний
-            if netstat -tuln 2>/dev/null | grep -q ':5000 '; then
-              echo "⚠️  Port 5000 still occupied, waiting more..."
-              sleep 3
-              fuser -k -9 5000/tcp 2>/dev/null || true
-              sleep 2
+            # M'яко зупиняємо старі процеси
+            if [ -f app.pid ]; then
+              OLD_PID=$(cat app.pid 2>/dev/null || echo "")
+              if [ -n "$OLD_PID" ] && kill -0 $OLD_PID 2>/dev/null; then
+                echo "Stopping old process $OLD_PID gracefully..."
+                kill -TERM $OLD_PID 2>/dev/null || true
+                sleep 3
+              fi
             fi
             
-            echo "✅ Cleanup complete"
-
-            # 🚀 Запуск нового сервера у фоновому режимі
-            echo "🚀 Starting new Flask/Waitress application..."
+            # Якщо процес все ще живий, вбиваємо примусово
+            pkill -9 -f "run_production.py" 2>/dev/null || true
+            pkill -9 -f "waitress" 2>/dev/null || true
+            
+            # Звільняємо порт
+            fuser -k 5000/tcp 2>/dev/null || true
+            sleep 2
+            
+            # Видаляємо старий PID файл
+            rm -f app.pid
+            
+            echo "✅ Old processes stopped"
+            
+            # Активуємо venv та запускаємо сервер
+            source venv/bin/activate
+            export USE_MYSQL=true
+            
+            echo "🚀 Starting new server..."
             nohup python3 run_production.py > flask.log 2>&1 & echo $! > app.pid
+            
+            sleep 5
+            
             NEW_PID=$(cat app.pid)
-            echo "Started new process with PID: $NEW_PID"
-
-            # Очікуємо, поки сервер стартує
-            sleep 8
             if kill -0 $NEW_PID 2>/dev/null; then
-              echo "✅ Flask/Waitress is running (PID $NEW_PID)"
-              curl -s http://localhost:5000/health || true
+              echo "✅ Server started successfully with PID $NEW_PID"
             else
-              echo "❌ Flask/Waitress failed to start"
-              tail -50 flask.log || true
+              echo "❌ Failed to start server"
+              tail -20 flask.log
               exit 1
+            fi
+            DEPLOY_SCRIPT
+            
+            chmod +x deploy_restart.sh
+            
+            # Запускаємо deploy скрипт через nohup та setsid для повної ізоляції
+            echo "Starting deployment in background..."
+            setsid nohup bash deploy_restart.sh > deploy.log 2>&1 &
+            
+            echo "Waiting for deployment to complete..."
+            sleep 12
+            
+            # Перевіряємо результат
+            if [ -f app.pid ] && kill -0 $(cat app.pid) 2>/dev/null; then
+              echo "✅ Deployment successful!"
+              cat deploy.log | tail -20
+            else
+              echo "❌ Deployment may have issues, checking logs..."
+              cat deploy.log | tail -30
             fi
 
       - name: Health Check
