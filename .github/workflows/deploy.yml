@@ -40,13 +40,21 @@ jobs:
 
             # Kill old process if exists (before starting new one)
             echo "🔍 Checking for old Flask processes..."
-            OLD_PIDS=$(pgrep -f "python run_production.py" || true)
-            
+            OLD_PIDS=$(pgrep -f "python run_production.py" || echo "")
+
             if [ ! -z "$OLD_PIDS" ]; then
               echo "Found old Flask process(es): $OLD_PIDS"
               echo "Stopping old process(es)..."
-              pkill -f "python run_production.py" || true
+              # Use || true to ignore exit codes (143 is normal for SIGTERM)
+              pkill -f "python run_production.py" 2>/dev/null || true
               sleep 3
+              
+              # Verify processes are stopped
+              if pgrep -f "python run_production.py" > /dev/null; then
+                echo "⚠️ Processes still running, force killing..."
+                pkill -9 -f "python run_production.py" 2>/dev/null || true
+                sleep 2
+              fi
               echo "✅ Old process(es) stopped"
             else
               echo "No old processes found"
