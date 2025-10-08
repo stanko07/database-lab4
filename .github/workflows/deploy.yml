@@ -24,84 +24,63 @@ jobs:
           script: |
             cd /home/admin/database-lab4/lab4_for_bd
 
-            # Switch to main branch
+            # Оновлення коду
             git fetch origin
             git checkout main
             git pull origin main
 
-            # Activate virtual environment
+            # Активуємо або створюємо віртуальне середовище
+            python3 -m venv venv || true
             source venv/bin/activate
 
-            # Install/update dependencies
+            # Встановлення залежностей
+            pip install --upgrade pip
             pip install -r app/requirements.txt
 
-            # Set environment variable for MySQL
+            # Змінні середовища
             export USE_MYSQL=true
 
-            # Kill old process if exists (before starting new one)
-            echo "🔍 Checking for old Flask processes..."
-            
-            # Try to gracefully stop old processes
-            if pgrep -f "python run_production.py" > /dev/null 2>&1; then
-              OLD_PIDS=$(pgrep -f "python run_production.py")
-              echo "Found old Flask process(es): $OLD_PIDS"
-              echo "Stopping old process(es)..."
-              
-              # Graceful shutdown with SIGTERM
-              pkill -TERM -f "python run_production.py" || true
-              sleep 3
-              
-              # Force kill if still running
-              if pgrep -f "python run_production.py" > /dev/null 2>&1; then
-                echo "⚠️ Processes still running, force killing..."
-                pkill -9 -f "python run_production.py" || true
-                sleep 2
+            # 🔍 Зупинка старих процесів
+            echo "🔍 Stopping old Flask/Waitress process if exists..."
+            if [ -f app.pid ]; then
+              OLD_PID=$(cat app.pid || echo "")
+              if [ -n "$OLD_PID" ] && kill -0 $OLD_PID 2>/dev/null; then
+                echo "Stopping PID $OLD_PID"
+                kill -TERM $OLD_PID >/dev/null 2>&1 || true
+                sleep 3
+                kill -9 $OLD_PID >/dev/null 2>&1 || true
               fi
-              
-              echo "✅ Old process(es) stopped"
-            else
-              echo "No old processes found"
+              rm -f app.pid
             fi
 
-            # Start new Flask application in background with production server
-            echo "🚀 Starting new Flask application..."
-            nohup python run_production.py > flask.log 2>&1 &
-            NEW_PID=$!
-            echo "Started new Flask process with PID: $NEW_PID"
+            # 🚀 Запуск нового сервера у фоновому режимі
+            echo "🚀 Starting new Flask/Waitress application..."
+            nohup python3 run_production.py > flask.log 2>&1 & echo $! > app.pid
+            NEW_PID=$(cat app.pid)
+            echo "Started new process with PID: $NEW_PID"
 
-            # Wait for application to initialize
+            # Очікуємо, поки сервер стартує
             sleep 8
-
-            # Check if new Flask is running
-            if ps -p $NEW_PID > /dev/null 2>&1; then
-              echo "✅ Flask application started successfully (PID: $NEW_PID)"
-              
-              # Test local endpoint
-              sleep 2
-              if curl -s http://localhost:5000/candidates > /dev/null 2>&1; then
-                echo "✅ API endpoint responding"
-              else
-                echo "⚠️ API endpoint not yet responding (might need more time)"
-              fi
+            if kill -0 $NEW_PID 2>/dev/null; then
+              echo "✅ Flask/Waitress is running (PID $NEW_PID)"
+              curl -s http://localhost:5000/health || true
             else
-              echo "❌ Flask application failed to start"
-              echo "Last 50 lines of log:"
-              tail -50 flask.log
+              echo "❌ Flask/Waitress failed to start"
+              tail -50 flask.log || true
               exit 1
             fi
-
-            echo "🚀 Deployment completed successfully at $(date)"
 
       - name: Health Check
         run: |
           sleep 5
-          response=$(curl -s -o /dev/null -w "%{http_code}" http://${{ secrets.AWS_EC2_HOST }}:5000/candidates)
+          response=$(curl -s -o /dev/null -w "%{http_code}" http://${{ secrets.AWS_EC2_HOST }}:5000/health)
           if [ $response -eq 200 ]; then
             echo "✅ Application is running successfully!"
             echo "🌐 API Endpoint: http://${{ secrets.AWS_EC2_HOST }}:5000/candidates"
             echo "📚 Swagger UI: http://${{ secrets.AWS_EC2_HOST }}:5000/apidocs/"
           else
             echo "❌ Health check failed with status code: $response"
+            tail -50 /home/admin/database-lab4/lab4_for_bd/flask.log || true
             exit 1
           fi
 
@@ -110,7 +89,7 @@ jobs:
         run: |
           echo "✅ Deployment successful!"
           echo "🎉 Application deployed to production"
-          echo "📝 Check Swagger documentation at: http://${{ secrets.AWS_EC2_HOST }}:5000/apidocs/"
+          echo "📝 Swagger documentation: http://${{ secrets.AWS_EC2_HOST }}:5000/apidocs/"
 
       - name: Notify on failure
         if: failure()
