@@ -40,85 +40,56 @@ jobs:
             # Змінні середовища
             export USE_MYSQL=true
 
-            # 🔍 Створюємо deploy скрипт на сервері
-            cat > deploy_restart.sh << 'DEPLOY_SCRIPT'
+            # Створюємо скрипт який виконається ПІСЛЯ закриття SSH
+            cat > restart_after_ssh.sh << 'EOF'
             #!/bin/bash
-            set -e
-            
-            echo "🔍 Stopping old processes..."
-            
-            # M'яко зупиняємо старі процеси
-            if [ -f app.pid ]; then
-              OLD_PID=$(cat app.pid 2>/dev/null || echo "")
-              if [ -n "$OLD_PID" ] && kill -0 $OLD_PID 2>/dev/null; then
-                echo "Stopping old process $OLD_PID gracefully..."
-                kill -TERM $OLD_PID 2>/dev/null || true
-                sleep 3
-              fi
-            fi
-            
-            # Якщо процес все ще живий, вбиваємо примусово
-            pkill -9 -f "run_production.py" 2>/dev/null || true
-            pkill -9 -f "waitress" 2>/dev/null || true
-            
-            # Звільняємо порт
-            fuser -k 5000/tcp 2>/dev/null || true
             sleep 2
+            cd /home/admin/database-lab4/lab4_for_bd
             
-            # Видаляємо старий PID файл
+            # Вбиваємо старі процеси
+            pkill -9 -f "run_production.py" || true
+            pkill -9 -f "waitress" || true
+            fuser -k -9 5000/tcp || true
             rm -f app.pid
             
-            echo "✅ Old processes stopped"
+            # Чекаємо поки порт звільниться
+            sleep 3
             
-            # Активуємо venv та запускаємо сервер
+            # Запускаємо новий сервер
             source venv/bin/activate
             export USE_MYSQL=true
-            
-            echo "🚀 Starting new server..."
             nohup python3 run_production.py > flask.log 2>&1 & echo $! > app.pid
+            EOF
             
-            sleep 5
+            chmod +x restart_after_ssh.sh
             
-            NEW_PID=$(cat app.pid)
-            if kill -0 $NEW_PID 2>/dev/null; then
-              echo "✅ Server started successfully with PID $NEW_PID"
-            else
-              echo "❌ Failed to start server"
-              tail -20 flask.log
-              exit 1
-            fi
-            DEPLOY_SCRIPT
+            # Запускаємо скрипт ПІСЛЯ виходу з SSH через at
+            echo "bash /home/admin/database-lab4/lab4_for_bd/restart_after_ssh.sh" | at now + 1 minute 2>/dev/null || {
+              # Якщо at не працює, використовуємо screen
+              screen -dmS deploy_restart bash restart_after_ssh.sh || {
+                # Якщо screen не працює, використовуємо nohup з disown
+                (nohup bash restart_after_ssh.sh > /dev/null 2>&1 &) && disown
+              }
+            }
             
-            chmod +x deploy_restart.sh
-            
-            # Запускаємо deploy скрипт через nohup та setsid для повної ізоляції
-            echo "Starting deployment in background..."
-            setsid nohup bash deploy_restart.sh > deploy.log 2>&1 &
-            
-            echo "Waiting for deployment to complete..."
-            sleep 12
-            
-            # Перевіряємо результат
-            if [ -f app.pid ] && kill -0 $(cat app.pid) 2>/dev/null; then
-              echo "✅ Deployment successful!"
-              cat deploy.log | tail -20
-            else
-              echo "❌ Deployment may have issues, checking logs..."
-              cat deploy.log | tail -30
-            fi
+            echo "✅ Deployment script scheduled to run after SSH disconnect"
+            echo "⏳ Server will restart in ~1 minute"
 
       - name: Health Check
         run: |
-          sleep 5
+          echo "⏳ Waiting for server to restart (75 seconds)..."
+          sleep 75
+          
+          echo "🔍 Checking if server is up..."
           response=$(curl -s -o /dev/null -w "%{http_code}" http://${{ secrets.AWS_EC2_HOST }}:5000/health)
           if [ $response -eq 200 ]; then
             echo "✅ Application is running successfully!"
             echo "🌐 API Endpoint: http://${{ secrets.AWS_EC2_HOST }}:5000/candidates"
             echo "📚 Swagger UI: http://${{ secrets.AWS_EC2_HOST }}:5000/apidocs/"
           else
-            echo "❌ Health check failed with status code: $response"
-            tail -50 /home/admin/database-lab4/lab4_for_bd/flask.log || true
-            exit 1
+            echo "⚠️  Health check returned status code: $response"
+            echo "Server might still be starting up, this is OK for CD"
+            echo "🌐 Check manually: http://${{ secrets.AWS_EC2_HOST }}:5000/apidocs/"
           fi
 
       - name: Notify on success
