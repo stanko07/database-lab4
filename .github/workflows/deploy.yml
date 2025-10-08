@@ -40,23 +40,38 @@ jobs:
             # Змінні середовища
             export USE_MYSQL=true
 
-            # 🔍 Зупинка старих процесів
-            echo "🔍 Stopping old Flask/Waitress process if exists..."
-            if [ -f app.pid ]; then
-              OLD_PID=$(cat app.pid || echo "")
-              if [ -n "$OLD_PID" ] && kill -0 $OLD_PID 2>/dev/null; then
-                echo "Stopping PID $OLD_PID"
-                kill -TERM $OLD_PID >/dev/null 2>&1 || true
-                sleep 3
-                kill -9 $OLD_PID >/dev/null 2>&1 || true
-              fi
-              rm -f app.pid
+            # 🔍 Зупинка старих процесів - АГРЕСИВНИЙ МЕТОД
+            echo "🔍 Stopping ALL old Flask/Waitress/Python processes..."
+
+            # Метод 1: Вбити всі Python процеси з run_production.py
+            echo "Method 1: Killing run_production.py processes..."
+            pkill -9 -f "run_production.py" 2>/dev/null || true
+            pkill -9 -f "python.*run_production" 2>/dev/null || true
+
+            # Метод 2: Вбити всі waitress процеси
+            echo "Method 2: Killing waitress processes..."
+            pkill -9 -f "waitress" 2>/dev/null || true
+
+            # Метод 3: Видалити PID файл
+            echo "Method 3: Removing PID file..."
+            rm -f app.pid
+
+            # Метод 4: Використати fuser (якщо доступний)
+            echo "Method 4: Using fuser to kill port 5000..."
+            fuser -k 5000/tcp 2>/dev/null || true
+
+            # Чекаємо поки порт звільниться
+            echo "Waiting for port 5000 to be free..."
+            sleep 5
+
+            # Перевіряємо чи порт вільний
+            if netstat -tuln 2>/dev/null | grep -q ':5000 '; then
+              echo "⚠️  Port 5000 still in use, trying one more time..."
+              fuser -k -9 5000/tcp 2>/dev/null || true
+              sleep 3
+            else
+              echo "✅ Port 5000 is free"
             fi
-            
-            # Вбиваємо всі процеси на порту 5000
-            echo "🔍 Killing all processes on port 5000..."
-            lsof -ti:5000 | xargs kill -9 2>/dev/null || true
-            sleep 2
 
             # 🚀 Запуск нового сервера у фоновому режимі
             echo "🚀 Starting new Flask/Waitress application..."
