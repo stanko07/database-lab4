@@ -8,6 +8,7 @@ import os
 import sys
 from app.database import db
 from sqlalchemy import text
+# Add the parent directory to sys.path to ensure imports work correctly
 
 print(sys.path)
 
