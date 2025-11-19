@@ -10,7 +10,7 @@ class Config:
             "mysql+pymysql://admin:vfhnf111@vacancies-company.cp0suqqgsip3.eu-north-1.rds.amazonaws.com:3306/vacancies_company"
         )
 
-    # ---------- FORCE MySQL Locally for Debug ----------
+    # ---------- FORCE MySQL Locally for Debugs ----------
     elif USE_MYSQL:
         SQLALCHEMY_DATABASE_URI = (
             "mysql+pymysql://admin:vfhnf111@vacancies-company.cp0suqqgsip3.eu-north-1.rds.amazonaws.com:3306/vacancies_company"
