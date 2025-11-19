@@ -2,7 +2,7 @@ from http import HTTPStatus
 from flask import Blueprint, jsonify, Response, request, make_response
 from flasgger import swag_from
 from app.controller   import projects_controller
-from ..domain.projects import Project
+from ..domain.projects import Project , insert_projects , get_through_capacity
 
 project_bp = Blueprint('projects', __name__, url_prefix='/projects')
 
@@ -196,3 +196,25 @@ def patch_project(project_id: int) -> Response:
 def delete_project(project_id: int) -> Response:
     projects_controller.delete(project_id)
     return make_response("projectdeleted", HTTPStatus.OK)
+
+
+
+@project_bp.route('/auto_insert', methods=['POST'])
+def auto_projects_create() -> Response | tuple[Response, int]:
+    num_projects = request.args.get('amount')
+    result = insert_projects(int(num_projects))
+    if result != -1:
+        res = [player.put_into_dto() for player in result]
+        return jsonify({"new_projects": res})
+    else:
+        return jsonify({"error"}), 400
+
+
+@project_bp.route('capacity', methods=['GET'])
+def get_capacity() -> Response | tuple[Response, int]:
+    stat_type = request.args.get('stat_type').upper()
+    result = get_through_capacity(stat_type)
+    if result != -1:
+        return jsonify({stat_type: result})
+    else:
+        return jsonify({"error": "Invalid stat_type. Use MAX, MIN, SUM, or AVG"}), 400

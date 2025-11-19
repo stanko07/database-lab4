@@ -8,6 +8,7 @@ from .interviews_service import InterviewsService
 from .projects_service import ProjectsService
 from .skills_service import SkillsService
 from .vacanci_service import VacanciService
+from .education_service import EducationService
 
 candidate_have_skills_service = CandidateHaveSkillsService()
 candidates_service = CandidatesService()
@@ -19,3 +20,4 @@ interviews_service = InterviewsService()
 projects_service = ProjectsService()
 skills_service = SkillsService()
 vacanci_service = VacanciService()
+education_service = EducationService()

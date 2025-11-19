@@ -9,6 +9,8 @@ from .interviews_dao import InterviewsDAO
 from .projects_dao import ProjectsDAO
 from .skills_dao import SkillsDAO
 from .vacanci_dao import VacanciDAO
+from .education_dao import EducationDAO
+
 
 candidate_have_skills_dao = CandidateHaveSkillsDAO()
 candidates_dao = CandidatesDAO()
@@ -21,3 +23,4 @@ interviews_dao = InterviewsDAO()
 projects_dao = ProjectsDAO()
 skills_dao = SkillsDAO()
 vacanci_dao = VacanciDAO()
+education_dao = EducationDAO()

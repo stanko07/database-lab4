@@ -39,3 +39,5 @@ class Interview(db.Model):
             company_id=dto_dict.get('company_id'),
             candidate_id=dto_dict.get('candidate_id')
         )
+    
+
