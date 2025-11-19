@@ -1,0 +1,11 @@
+venv
+__pycache__
+*.pyc
+*.pyo
+*.pyd
+.flaskenv
+.env
+.git
+.gitignore
+.idea
+.vscode

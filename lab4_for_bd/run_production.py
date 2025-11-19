@@ -1,6 +1,8 @@
+import os
 from waitress import serve
 from app import create_app
 import socket
+os.environ["FLASK_ENV"] = "production"
 
 app = create_app()
 
