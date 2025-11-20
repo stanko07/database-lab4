@@ -2,6 +2,7 @@ import os
 
 class Config:
     FLASK_ENV = os.getenv("FLASK_ENV", "development")
+    # ---------- ENV VARIABLE TO FORCE MySQL USAGE LOCALLY ----------
     USE_MYSQL = os.getenv("USE_MYSQL", "false").lower() == "true"
 
     # ---------- PRODUCTION (AWS ECS + RDS) ----------
